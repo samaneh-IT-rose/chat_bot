@@ -134,8 +134,22 @@ curl -N http://localhost:8000/api/chat \
 | پورت 8000 اشغال است | `PORT=9000 bash run.sh` |
 | پاسخ‌دهی کند | مدل سبک‌تر: `CHAT_MODEL=gemma3:1b bash run.sh` |
 | کارت گرافیک ندارم | مشکلی نیست — روی CPU هم اجرا می‌شود (فقط کندتر) |
+| `ollama.com` خطای 403 داد | نگران نباشید — اسکریپت خودکار از GitHub Releases و آینه‌های مدل ادامه می‌دهد |
 
 **حداقل سخت‌افزار:** ۴ گیگ رم + ۶ گیگ فضای خالی (پیشنهادی: ۸ گیگ رم)
+
+### 🇮🇷 نصب در ایران (کشورهای تحریم‌شده)
+
+سایت `ollama.com` از ایران پاسخ **403** می‌دهد. `install.sh` به‌صورت **خودکار** این مشکل را دور می‌زند و به هیچ VPN نیازی نیست:
+
+1. **موتور Ollama** → مستقیم از GitHub Releases دانلود و به‌صورت سرویس systemd نصب می‌شود
+2. **مدل Gemma 3** → ابتدا از رجیستری رسمی تلاش می‌کند؛ اگر مسدود بود، از آینه‌های `modelscope.cn` و `hf-mirror.com` دانلود (تست‌شده: ۲.۴۹ گیگ، قابلیت Resume) و با `ollama create` به‌صورت `gemma3:4b` ایمپورت می‌شود
+
+اگر VPN دارید، می‌توانید همه‌چیز را از منابع رسمی بگیرید:
+
+```bash
+https_proxy=http://127.0.0.1:PORT bash install.sh
+```
 
 </div>
 
@@ -201,6 +215,7 @@ curl -N http://localhost:8000/api/chat -H "Content-Type: application/json" \
 | Model missing in list | `ollama pull gemma3:4b`, then refresh |
 | Port 8000 busy | `PORT=9000 bash run.sh` |
 | Slow answers | lighter model: `CHAT_MODEL=gemma3:1b bash run.sh` |
+| `ollama.com` returns 403 (Iran / sanctioned regions) | Nothing to do — the installer auto-falls back to GitHub Releases + GGUF mirrors (hf-mirror.com / ModelScope). With a VPN: `https_proxy=http://127.0.0.1:PORT bash install.sh` |
 
 **Minimum hardware:** 4 GB RAM + 6 GB free disk (8 GB RAM recommended). CPU-only works fine.
 

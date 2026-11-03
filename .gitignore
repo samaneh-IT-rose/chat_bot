@@ -8,6 +8,7 @@ venv/
 # Runtime
 nohup.out
 *.log
+.models/
 
 # Editors / OS
 .vscode/
