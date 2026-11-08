@@ -19,6 +19,7 @@ const I18N = {
     chip1: "سلام! خودت را معرفی کن",
     chip2: "یک برنامه سفر سه‌روزه به اصفهان بنویس",
     chip3: "یک صفحه HTML رنگی برای جشن تولد بساز",
+    chip4: "یک صفحهٔ HTML جذاب با گرافیک دربارهٔ فواید ورزش بساز",
     composer_ph: "پیام خود را بنویسید… (Enter برای ارسال، Shift+Enter خط جدید)",
     disclaimer: "مدل به‌صورت محلی اجرا می‌شود؛ پاسخ‌ها را حتماً بررسی کنید.",
     thinking: "در حال نوشتن",
@@ -67,6 +68,7 @@ const I18N = {
     chip1: "Hi! Introduce yourself",
     chip2: "Plan a 3-day trip to Isfahan",
     chip3: "Build a colorful HTML birthday page",
+    chip4: "Build a beautiful HTML page about the benefits of exercise",
     composer_ph: "Type your message… (Enter to send, Shift+Enter for newline)",
     disclaimer: "The model runs locally — always double-check the answers.",
     thinking: "Thinking",
@@ -597,6 +599,7 @@ function heroHTML() {
         <button class="chip" data-chip="chip1">${L.chip1}</button>
         <button class="chip" data-chip="chip2">${L.chip2}</button>
         <button class="chip" data-chip="chip3">${L.chip3}</button>
+        <button class="chip" data-chip="chip4">${L.chip4}</button>
       </div>
     </div>`;
 }

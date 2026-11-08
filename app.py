@@ -17,7 +17,7 @@ Environment variables:
     SYSTEM_PROMPT default: bilingual-friendly helpful assistant
     CHAT_HISTORY_TURNS  default: 8      (older turns are dropped -> faster answers)
     OLLAMA_NUM_CTX      default: 3072   (context window; smaller = much faster on CPU)
-    OLLAMA_NUM_PREDICT  default: 1024   (max tokens per answer)
+    OLLAMA_NUM_PREDICT  default: 2048   (max tokens per answer — 2048 so full HTML pages fit)
     OLLAMA_KEEP_ALIVE   default: 30m    (keep the model in RAM so the next answer starts fast)
 
 Author : samaneh-IT-rose
@@ -42,7 +42,9 @@ PORT = int(os.environ.get("PORT", "8000"))
 # prefill time grows with every token sent to the model.
 MAX_HISTORY_TURNS = int(os.environ.get("CHAT_HISTORY_TURNS", "8"))
 NUM_CTX = int(os.environ.get("OLLAMA_NUM_CTX", "3072"))
-NUM_PREDICT = int(os.environ.get("OLLAMA_NUM_PREDICT", "1024"))
+# 2048 (not 1024): a complete HTML page with CSS graphics needs ~1500-2500 tokens,
+# otherwise the answer is cut off mid-tag. Raise it (e.g. 4096) for longer pages.
+NUM_PREDICT = int(os.environ.get("OLLAMA_NUM_PREDICT", "2048"))
 KEEP_ALIVE = os.environ.get("OLLAMA_KEEP_ALIVE", "30m")  # model stays warm in RAM
 
 MAX_IMAGES = 4                          # per message (Gemma 3 is multimodal)
@@ -52,8 +54,18 @@ SYSTEM_PROMPT = os.environ.get(
     "SYSTEM_PROMPT",
     "You are a helpful, friendly and knowledgeable assistant. Always answer "
     "in the same language the user writes in (e.g. Persian/Farsi or English). "
-    "Be accurate, concise and well-structured. Use Markdown formatting when "
-    "it improves readability.",
+    "Be accurate, concise and well-structured; use Markdown when it improves "
+    "readability.\n\n"
+    "IMPORTANT — you CAN write complete files and code; never claim you lack "
+    "the tools or cannot create files. When the user asks for an HTML page or "
+    "file, ALWAYS output ONE complete, standalone HTML document inside a "
+    "single ```html code block: start with <!doctype html>, put all CSS in an "
+    "inline <style> tag (modern CSS: gradients, flex/grid, rounded cards, "
+    "shadows), use inline SVG or emoji for graphics and icons, and include NO "
+    "external links, no CDN, no internet resources (it must work fully "
+    "offline). The chat UI renders this block in its built-in 'Run HTML' "
+    "preview, so give the FULL file — never fragments — then add a short "
+    "one-or-two-sentence explanation. Keep the page compact but polished.",
 )
 
 app = Flask(__name__)

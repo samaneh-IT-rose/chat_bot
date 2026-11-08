@@ -19,6 +19,7 @@
 | 🧠 مغز رایگان | مدل **Gemma 3 4B** گوگل (متن‌باز، پشتیبانی از ۱۴۰+ زبان از جمله فارسی) |
 | 📎 پیوست فایل | فایل متنی/کد (محدود ۵۱۲KB) یا عکس (محدود ۴MB) — عکس‌ها با قابلیت بینایی Gemma 3 تحلیل می‌شوند؛ کشیدن‌ورها کردن (Drag&Drop) و Paste هم کار می‌کند |
 | ▶ اجرای HTML | کد HTML داخل پاسخ‌ها دکمه «اجرای HTML» دارد و در پنجرهٔ پیش‌نمایش امن (sandboxed) رندر می‌شود |
+| 🎨 سازندهٔ صفحهٔ HTML | پیام سیستمی مدل طوری تنظیم شده که به‌جای بهانه‌آوردن، **یک فایل HTML کامل و مستقل** (CSS داخلی، گرادیان، SVG، بدون CDN) در یک بلاک `‎```html` بنویسد تا با دکمهٔ اجرا مستقیم ببینید |
 | 📥 خروجی گفتگو | دکمهٔ دانلود در نوار بالا: **اکسل (xlsx)، وورد (docx)، PDF (چاپ) و پاورپوینت (pptx)** — همه در مرورگر و بدون اینترنت |
 | 🚀 بهینه‌سازی سرعت | کانتکست ۳۰۷۲، تاریخچه ۸ نوبت، مدل در RAM گرم می‌ماند (keep_alive) — پاسخ‌های سریع‌تر روی CPU |
 | 📦 کتابخانه‌های محلی | تمام کتابخانه‌های جاوااسکریپت داخل پروژه (vendor) — بدون CDN، حتی بدون اینترنت کار می‌کند |
@@ -96,7 +97,13 @@ python app.py
 | `CHAT_MODEL` | `gemma3:4b` | مدل پیش‌فرض چت |
 | `PORT` | `8000` | پورت وب‌اپ |
 | `OLLAMA_HOST` | `http://localhost:11434` | آدرس سرویس Ollama |
-| `SYSTEM_PROMPT` | دستیار دوزبانه | شخصیت/دستورالعمل مدل |
+| `SYSTEM_PROMPT` | دستیار دوزبانه + دستورالعمل ساخت HTML | شخصیت/دستورالعمل مدل |
+| `CHAT_HISTORY_TURNS` | `8` | تعداد نوبت‌های گفتگوی ارسالی به مدل (کمتر = سریع‌تر) |
+| `OLLAMA_NUM_CTX` | `3072` | اندازهٔ پنجرهٔ کانتکست (کوچک‌تر = خیلی سریع‌تر روی CPU) |
+| `OLLAMA_NUM_PREDICT` | `2048` | سقف طول هر پاسخ — برای صفحات HTML طولانی‌تر عدد بالاتر بدهید (مثل `4096`) |
+| `OLLAMA_KEEP_ALIVE` | `30m` | مدل چقدر در RAM بماند (بدون reload بین سؤال‌ها) |
+
+> 💡 **نکتهٔ صفحه‌های HTML:** مدل ۴B روی CPU طول می‌کشد؛ ساخت یک صفحهٔ کامل با گرافیک ممکن است **۳ تا ۸ دقیقه** طول بکشد (بستگی به CPU). اگر وسط کد قطع شد، `OLLAMA_NUM_PREDICT=4096 bash run.sh` را اجرا کنید. برای گرافیک خیلی پیچیده از مدل بخواهید «کوتاه ولی کامل» بنویسد.
 
 مثال تغییر مدل و پورت:
 
@@ -178,6 +185,7 @@ A complete ChatGPT-style chatbot that runs **100% free and 100% locally** on Lin
 - 🧠 **Free brain:** Google's **Gemma 3 4B** (open weights, 140+ languages)
 - 📎 **File attachments** — text/code files (≤512KB) and images (≤4MB, Gemma 3 vision); drag & drop and paste supported
 - ▶ **Run HTML** — HTML code blocks get a ▶ Run button and render in a sandboxed preview modal
+- 🎨 **HTML page builder** — the system prompt trains the model to output a **complete standalone HTML file** (inline CSS, gradients, SVG, no CDN) in one ```html block instead of refusing
 - 📥 **Export conversation** — Excel (.xlsx), Word (.docx), PDF (print), PowerPoint (.pptx) — generated in the browser, works offline
 - 🚀 **CPU speed tuning** — 3072 ctx, 8 history turns, keep_alive keeps the model warm in RAM
 - 📦 **Local vendor libs** — all JavaScript bundled in `static/vendor/` (no CDN, no internet needed)
