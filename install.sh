@@ -21,8 +21,21 @@ warn() { echo -e "${YELLOW}==>${NC} $1"; }
 info() { echo -e "${CYAN}  →${NC} $1"; }
 fail() { echo -e "${RED}==>${NC} $1"; exit 1; }
 
+# never die silently — always print WHERE the install stopped
+trap 'echo; fail "Install stopped unexpectedly (around line $LINENO). Scroll up — the real error is the last line above this banner."' ERR
+
 SUDO=""
 if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then SUDO="sudo"; fi
+
+# ─────────────────────────────────────────────────────────────
+# ask for the sudo password ONCE, up-front, with a clear failure message
+if [ -n "$SUDO" ]; then
+    echo "  🔑 sudo password is needed for apt/firewall (typing is INVISIBLE —"
+    echo "     check your keyboard layout is English, then press Enter):"
+    if ! $SUDO -v; then
+        fail "sudo authentication FAILED. Run 'bash install.sh' again and retype your login password carefully."
+    fi
+fi
 
 # detect architecture (for the GitHub Releases fallback)
 case "$(uname -m)" in
