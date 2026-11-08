@@ -777,7 +777,9 @@ async function send() {
       body: JSON.stringify({
         message: apiMessage,
         images,
-        history: conv.messages.filter(m => m.role === "user" || m.role === "assistant"),
+        // NOTE: slice(0,-1) — the current user message is already sent as `message`
+        // (with attachment contents inlined); don't duplicate it inside history.
+        history: conv.messages.slice(0, -1).filter(m => m.role === "user" || m.role === "assistant"),
         model: state.model || "gemma3:4b",
       }),
       signal: aborter.signal,
