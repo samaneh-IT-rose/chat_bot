@@ -19,6 +19,15 @@ if [ ! -d .venv ]; then
     exit 1
 fi
 
+# friendly pre-check: is the port already taken? (old SSH tunnel / stale app instance)
+if command -v ss >/dev/null 2>&1 && ss -tln 2>/dev/null | awk '{print $4}' | grep -q ":${PORT}$"; then
+    echo "⚠  Port ${PORT} is already in use — probably an old SSH tunnel or a previous app instance."
+    echo "     See who holds it :  ss -tlnp | grep :${PORT}"
+    echo "     Free the port    :  sudo fuser -k ${PORT}/tcp     ← then run 'bash run.sh' again"
+    echo "     Or another port  :  PORT=9000 bash run.sh"
+    exit 1
+fi
+
 # make sure Ollama is up (best effort)
 if ! curl -fsS http://localhost:11434/api/tags >/dev/null 2>&1; then
     echo "⚠  Ollama is not reachable — trying to start the service…"
