@@ -7,6 +7,12 @@
 #  it automatically falls back to GitHub Releases for Ollama and to
 #  HF/ModelScope mirrors for the model GGUF — no VPN needed.
 #
+#  v3.2: big downloads go to ~/.cache/chat-bot (NOT /tmp — on Ubuntu 25.04+/26.04
+#        /tmp is a small RAM-disk tmpfs, a 1.4 GB download dies there with
+#        'curl: (23) Failure writing output to destination' = disk full),
+#        interrupted downloads RESUME from where they stopped (-C -),
+#        and free disk space is checked BEFORE each big download.
+#
 #  Usage:  bash install.sh
 #          (with a VPN/proxy:  https_proxy=http://127.0.0.1:PORT bash install.sh)
 # ═══════════════════════════════════════════════════════════════
@@ -26,6 +32,36 @@ trap 'echo; fail "Install stopped unexpectedly (around line $LINENO). Scroll up 
 
 SUDO=""
 if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then SUDO="sudo"; fi
+
+# all relative paths (.models, .venv) are relative to THIS script, not the caller's CWD
+cd "$(dirname "$0")"
+
+# big files are stored on the real disk (home), never in /tmp (tmpfs on 26.04)
+CACHE="$HOME/.cache/chat-bot"
+mkdir -p "$CACHE"
+
+# ── disk-space helpers ────────────────────────────────────────
+avail_gb() { df -BG --output=avail "$1" 2>/dev/null | tail -n1 | tr -dc '0-9'; }
+# need_space <path> <needed_GB> <what-for>  — abort early with clear instructions
+need_space() {
+    local path="$1" need="$2" what="$3" have
+    have="$(avail_gb "$path")"
+    [ -z "$have" ] && { warn "Could not read free disk space — continuing anyway."; return 0; }
+    if [ "$have" -lt "$need" ]; then
+        echo
+        df -h "$path" | tail -n1
+        echo
+        fail "Not enough disk space for $what: only ${have}GB free, need ~${need}GB.
+فضای دیسک کافی نیست — چند GB خالی کنید و دوباره 'bash install.sh' را اجرا کنید.
+Free up space, then run 'bash install.sh' again:
+    df -h /                          # see which filesystem is full
+    sudo apt clean
+    sudo journalctl --vacuum-size=100M
+    rm -f /tmp/ollama-linux-*.tar.zst ~/.cache/chat-bot/*.partial
+    docker system df && sudo docker system prune   # if you use Docker"
+    fi
+    info "Disk space OK: ${have}GB free (need ~${need}GB) — $what"
+}
 
 # ─────────────────────────────────────────────────────────────
 # ask for the sudo password ONCE, up-front, with a clear failure message
@@ -67,10 +103,35 @@ fi
 
 # ─────────────────────────────────────────────────────────────
 install_ollama_from_github() {
-    local TGZ="/tmp/ollama-linux-${OARCH}.tar.zst"
+    local TGZ="$CACHE/ollama-linux-${OARCH}.tar.zst"
     local URL="https://github.com/ollama/ollama/releases/latest/download/ollama-linux-${OARCH}.tar.zst"
+    # remove stale partials left in /tmp by older versions (they fill up the RAM-disk)
+    rm -f /tmp/ollama-linux-*.tar.zst 2>/dev/null || true
+    need_space "$CACHE" 2 "Ollama archive download"
+    need_space /usr 5 "Ollama engine (extraction)"
     step "Downloading Ollama from GitHub Releases (~1.5 GB — accessible from Iran)…"
-    curl -fL --retry 3 --retry-delay 2 -o "$TGZ" "$URL"
+    info "Saved to: $TGZ   (if interrupted → run install.sh again, it RESUMES)"
+    local remote_size local_size
+    remote_size="$(curl -fsIL --max-time 30 "$URL" 2>/dev/null | tr -d '\r' | awk 'tolower($1)=="content-length:" {print $2}' | tail -n1)"
+    local_size="$(stat -c%s "$TGZ" 2>/dev/null || echo 0)"
+    if [ -n "$remote_size" ] && [ "$local_size" = "$remote_size" ] && [ "$local_size" != "0" ]; then
+        warn "Archive already fully downloaded — skipping the download."
+    else
+        # -C -  ⇒ resume an interrupted download instead of starting over
+        if ! curl -fL --retry 3 --retry-delay 2 -C - -o "$TGZ" "$URL"; then
+            local_size="$(stat -c%s "$TGZ" 2>/dev/null || echo 0)"
+            if [ -n "$remote_size" ] && [ "$local_size" = "$remote_size" ]; then
+                warn "Download resumed to completion — continuing."
+            elif [ "$local_size" -ge 1000000000 ] 2>/dev/null; then
+                warn "curl failed but the archive looks complete ($local_size bytes) — trying to extract…"
+            else
+                df -h "$CACHE" | tail -n1 || true
+                fail "Download failed (see curl error above). Free disk space if it says 'No space left',
+then run 'bash install.sh' again — the download RESUMES, it does not start over.
+⇒ دوباره 'bash install.sh' را اجرا کنید؛ دانلود از همان‌جا ادامه پیدا می‌کند."
+            fi
+        fi
+    fi
     info "Extracting to /usr …"
     $SUDO tar --use-compress-program=zstd -C /usr -xf "$TGZ"
     rm -f "$TGZ"
@@ -148,6 +209,8 @@ install_model_from_mirrors() {
         "https://huggingface.co/unsloth/gemma-3-4b-it-GGUF/resolve/main/$GGUF"
     )
     mkdir -p .models
+    need_space "." 3 "model download (~2.5 GB GGUF)"
+    need_space /usr 4 "model import into Ollama"
     local ok=0
     for u in "${URLS[@]}"; do
         info "Mirror: $u"
@@ -176,7 +239,6 @@ fi
 
 # ─────────────────────────────────────────────────────────────
 step "5/5 — Setting up the Python web app…"
-cd "$(dirname "$0")"
 [ -d .venv ] || python3 -m venv .venv
 # shellcheck disable=SC1091
 . .venv/bin/activate

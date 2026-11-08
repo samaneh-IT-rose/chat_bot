@@ -135,8 +135,10 @@ curl -N http://localhost:8000/api/chat \
 | پاسخ‌دهی کند | مدل سبک‌تر: `CHAT_MODEL=gemma3:1b bash run.sh` |
 | کارت گرافیک ندارم | مشکلی نیست — روی CPU هم اجرا می‌شود (فقط کندتر) |
 | `ollama.com` خطای 403 داد | نگران نباشید — اسکریپت خودکار از GitHub Releases و آینه‌های مدل ادامه می‌دهد |
+| `curl: (23) Failure writing output to destination` | دیسک پر شده — روی اوبونتو ۲۵.۰۴ به بعد `/tmp` یک دیسک مجازی کوچک از رم است. نسخهٔ جدید `install.sh` فایل‌های حجیم را در `~/.cache/chat-bot` ذخیره می‌کند و دانلود نیمه‌کاره را ادامه می‌دهد؛ فقط چند GB فضا خالی کنید و دوباره اجرا کنید |
+| نصب وسط کار قطع شد | دوباره `bash install.sh` بزنید — دانلود از همان‌جایی که قطع شده ادامه پیدا می‌کند (Resume)، از صفر شروع نمی‌شود |
 
-**حداقل سخت‌افزار:** ۴ گیگ رم + ۶ گیگ فضای خالی (پیشنهادی: ۸ گیگ رم)
+**حداقل سخت‌افزار:** ۴ گیگ رم + ۱۰ گیگ فضای خالی دیسک (پیشنهادی: ۸ گیگ رم)
 
 ### 🇮🇷 نصب در ایران (کشورهای تحریم‌شده)
 
@@ -216,8 +218,10 @@ curl -N http://localhost:8000/api/chat -H "Content-Type: application/json" \
 | Port 8000 busy | `PORT=9000 bash run.sh` |
 | Slow answers | lighter model: `CHAT_MODEL=gemma3:1b bash run.sh` |
 | `ollama.com` returns 403 (Iran / sanctioned regions) | Nothing to do — the installer auto-falls back to GitHub Releases + GGUF mirrors (hf-mirror.com / ModelScope). With a VPN: `https_proxy=http://127.0.0.1:PORT bash install.sh` |
+| `curl: (23) Failure writing output to destination` | Disk full — on Ubuntu 25.04+ `/tmp` is a small RAM-backed tmpfs. The new `install.sh` stores big files in `~/.cache/chat-bot` and resumes interrupted downloads; free some GB and re-run |
+| Install stopped mid-way | Just run `bash install.sh` again — downloads RESUME where they stopped instead of starting over |
 
-**Minimum hardware:** 4 GB RAM + 6 GB free disk (8 GB RAM recommended). CPU-only works fine.
+**Minimum hardware:** 4 GB RAM + 10 GB free disk (8 GB RAM recommended). CPU-only works fine.
 
 ---
 
