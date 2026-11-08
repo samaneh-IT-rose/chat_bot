@@ -242,8 +242,35 @@ step "5/5 — Setting up the Python web app…"
 [ -d .venv ] || python3 -m venv .venv
 # shellcheck disable=SC1091
 . .venv/bin/activate
-pip install --quiet --upgrade pip
-pip install --quiet -r requirements.txt
+
+# v3.3: pypi.org is blocked/throttled in some regions (e.g. Iran) —
+# try the default index first, then mirrors (Tsinghua → Aliyun → USTC)
+pip_install() {
+    local idx ok=0 cmd
+    for idx in "" \
+               "https://pypi.tuna.tsinghua.edu.cn/simple" \
+               "https://mirrors.aliyun.com/pypi/simple/" \
+               "https://pypi.mirrors.ustc.edu.cn/simple/"; do
+        cmd=(pip install --quiet --retries 1 --timeout 10)
+        if [ -n "$idx" ]; then
+            info "pip: trying mirror $idx …"
+            cmd+=(-i "$idx")
+        else
+            info "pip: trying pypi.org …"
+        fi
+        if "${cmd[@]}" "$@"; then ok=1; break; fi
+        warn "pip source failed — falling back to the next mirror…"
+    done
+    [ "$ok" = "1" ]
+}
+if ! pip_install --upgrade pip; then
+    fail "pip could not reach pypi.org or any mirror. Test your connection:
+    curl -I https://pypi.tuna.tsinghua.edu.cn/simple/"
+fi
+if ! pip_install -r requirements.txt; then
+    fail "Flask/requests could not be installed from pypi.org or any mirror.
+⇒ اتصال به PyPI برقرار نشد؛ اتصال اینترنت سرور را بررسی کنید و دوباره 'bash install.sh' را اجرا کنید."
+fi
 
 echo ""
 echo -e "${GREEN}─────────────────────────────────────────────────${NC}"
