@@ -43,6 +43,15 @@ export DEBIAN_FRONTEND=noninteractive
 $SUDO apt-get update -y
 $SUDO apt-get install -y curl ca-certificates python3 python3-venv python3-pip zstd tar
 
+# open the web-app port in the firewall so other devices (laptop/phone on the
+# same network) can reach the chat bot via http://<server-ip>:<port>
+if command -v ufw >/dev/null 2>&1; then
+    if [ "$($SUDO ufw status 2>/dev/null | head -n1)" != "inactive" ] && [ -n "$($SUDO ufw status 2>/dev/null)" ]; then
+        info "Firewall (ufw) is active — opening port ${APP_PORT}/tcp for LAN access…"
+        $SUDO ufw allow "${APP_PORT}/tcp" comment 'chat-bot web app' >/dev/null 2>&1 || true
+    fi
+fi
+
 # ─────────────────────────────────────────────────────────────
 install_ollama_from_github() {
     local TGZ="/tmp/ollama-linux-${OARCH}.tar.zst"

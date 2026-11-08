@@ -3,11 +3,16 @@
 #  Chat Bot — start the web app
 #  Usage:  bash run.sh          (default port 8000)
 #          PORT=9000 bash run.sh
+#
+#  The app listens on 0.0.0.0, so it is reachable from any device
+#  on your network:  http://<this-machine-ip>:8000
+#  (SSH tunnel alternative:  ssh -L 8000:localhost:8000 user@host)
 # ═══════════════════════════════════════════════════════════════
 set -euo pipefail
 cd "$(dirname "$0")"
 
 PORT="${PORT:-8000}"
+YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
 
 if [ ! -d .venv ]; then
     echo "❌ Not installed yet. First run:  bash install.sh"
@@ -24,7 +29,22 @@ fi
 # shellcheck disable=SC1091
 . .venv/bin/activate
 
+LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+
 echo ""
-echo "  🤖  Chat Bot  →  http://localhost:${PORT}   (stop with Ctrl+C)"
+echo "  ╭─────────────────────────────────────────────────╮"
+echo "  │  🤖  Chat Bot                                    │"
+echo "  ╰─────────────────────────────────────────────────╯"
+echo ""
+echo "  Open in browser:"
+echo -e "    • this machine :  ${YELLOW}http://localhost:${PORT}${NC}"
+if [ -n "${LAN_IP}" ]; then
+    echo -e "    • your network :  ${YELLOW}http://${LAN_IP}:${PORT}${NC}   ← from laptop / phone on same LAN"
+    echo ""
+    echo "  SSH tunnel alternative (if firewall blocks the port):"
+    echo "    ssh -L ${PORT}:localhost:${PORT} \$USER@${LAN_IP}   →  then open http://localhost:${PORT}"
+fi
+echo ""
+echo "  Stop with Ctrl+C"
 echo ""
 python app.py
