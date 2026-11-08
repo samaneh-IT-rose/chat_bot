@@ -15,6 +15,10 @@ Environment variables:
     CHAT_MODEL    default: gemma3:4b
     PORT          default: 8000
     SYSTEM_PROMPT default: bilingual-friendly helpful assistant
+    CHAT_HISTORY_TURNS  default: 8      (older turns are dropped -> faster answers)
+    OLLAMA_NUM_CTX      default: 3072   (context window; smaller = much faster on CPU)
+    OLLAMA_NUM_PREDICT  default: 1024   (max tokens per answer)
+    OLLAMA_KEEP_ALIVE   default: 30m    (keep the model in RAM so the next answer starts fast)
 
 Author : samaneh-IT-rose
 Repo   : https://github.com/samaneh-IT-rose/chat_bot
@@ -32,7 +36,17 @@ APP_NAME = "Chat Bot"
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 DEFAULT_MODEL = os.environ.get("CHAT_MODEL", "gemma3:4b")
 PORT = int(os.environ.get("PORT", "8000"))
-MAX_HISTORY_TURNS = 40  # kept inside Gemma 3's 128K context window
+
+# ── speed tuning (CPU-friendly defaults) ─────────────────────
+# A small history + small context window is the #1 CPU speed-up:
+# prefill time grows with every token sent to the model.
+MAX_HISTORY_TURNS = int(os.environ.get("CHAT_HISTORY_TURNS", "8"))
+NUM_CTX = int(os.environ.get("OLLAMA_NUM_CTX", "3072"))
+NUM_PREDICT = int(os.environ.get("OLLAMA_NUM_PREDICT", "1024"))
+KEEP_ALIVE = os.environ.get("OLLAMA_KEEP_ALIVE", "30m")  # model stays warm in RAM
+
+MAX_IMAGES = 4                          # per message (Gemma 3 is multimodal)
+MAX_IMAGE_B64 = 8 * 1024 * 1024         # ~6 MB per image after base64
 
 SYSTEM_PROMPT = os.environ.get(
     "SYSTEM_PROMPT",
@@ -85,23 +99,41 @@ def chat():
     message = (payload.get("message") or "").strip()
     history = payload.get("history") or []
     model = (payload.get("model") or DEFAULT_MODEL).strip()
+    images = payload.get("images") or []  # base64 images for multimodal models
 
-    if not message:
+    if not message and not images:
         return jsonify({"ok": False, "error": "empty-message"}), 400
+
+    # keep only small, valid base64 strings (protects the local server)
+    clean_images = [str(i) for i in images
+                    if i and len(str(i)) <= MAX_IMAGE_B64][:MAX_IMAGES]
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     for item in history[-MAX_HISTORY_TURNS:]:
         role = item.get("role")
         content = (item.get("content") or "").strip()
+        # NOTE: images of past turns are intentionally NOT re-sent (speed)
         if role in ("user", "assistant") and content:
             messages.append({"role": role, "content": content})
-    messages.append({"role": "user", "content": message})
+    last = {"role": "user", "content": message}
+    if clean_images:
+        last["images"] = clean_images
+    messages.append(last)
 
     def generate():
         try:
             with requests.post(
                 ollama_url("/api/chat"),
-                json={"model": model, "messages": messages, "stream": True},
+                json={
+                    "model": model,
+                    "messages": messages,
+                    "stream": True,
+                    "keep_alive": KEEP_ALIVE,   # no cold reload between questions
+                    "options": {
+                        "num_ctx": NUM_CTX,
+                        "num_predict": NUM_PREDICT,
+                    },
+                },
                 stream=True,
                 timeout=(5, 300),
             ) as upstream:

@@ -17,6 +17,11 @@
 | 🛑 توقف تولید | دکمه توقف در وسط تولید پاسخ |
 | 🔀 انتخاب مدل | لیست مدل‌های نصب‌شده به‌صورت خودکار شناسایی می‌شود |
 | 🧠 مغز رایگان | مدل **Gemma 3 4B** گوگل (متن‌باز، پشتیبانی از ۱۴۰+ زبان از جمله فارسی) |
+| 📎 پیوست فایل | فایل متنی/کد (محدود ۵۱۲KB) یا عکس (محدود ۴MB) — عکس‌ها با قابلیت بینایی Gemma 3 تحلیل می‌شوند؛ کشیدن‌ورها کردن (Drag&Drop) و Paste هم کار می‌کند |
+| ▶ اجرای HTML | کد HTML داخل پاسخ‌ها دکمه «اجرای HTML» دارد و در پنجرهٔ پیش‌نمایش امن (sandboxed) رندر می‌شود |
+| 📥 خروجی گفتگو | دکمهٔ دانلود در نوار بالا: **اکسل (xlsx)، وورد (docx)، PDF (چاپ) و پاورپوینت (pptx)** — همه در مرورگر و بدون اینترنت |
+| 🚀 بهینه‌سازی سرعت | کانتکست ۳۰۷۲، تاریخچه ۸ نوبت، مدل در RAM گرم می‌ماند (keep_alive) — پاسخ‌های سریع‌تر روی CPU |
+| 📦 کتابخانه‌های محلی | تمام کتابخانه‌های جاوااسکریپت داخل پروژه (vendor) — بدون CDN، حتی بدون اینترنت کار می‌کند |
 
 ### 🏗 معماری
 
@@ -171,6 +176,11 @@ A complete ChatGPT-style chatbot that runs **100% free and 100% locally** on Lin
 - 🛑 **Stop generation** — abort mid-answer
 - 🔀 **Model picker** — auto-detects installed Ollama models
 - 🧠 **Free brain:** Google's **Gemma 3 4B** (open weights, 140+ languages)
+- 📎 **File attachments** — text/code files (≤512KB) and images (≤4MB, Gemma 3 vision); drag & drop and paste supported
+- ▶ **Run HTML** — HTML code blocks get a ▶ Run button and render in a sandboxed preview modal
+- 📥 **Export conversation** — Excel (.xlsx), Word (.docx), PDF (print), PowerPoint (.pptx) — generated in the browser, works offline
+- 🚀 **CPU speed tuning** — 3072 ctx, 8 history turns, keep_alive keeps the model warm in RAM
+- 📦 **Local vendor libs** — all JavaScript bundled in `static/vendor/` (no CDN, no internet needed)
 
 ### 🚀 Quick start (Ubuntu 22.04 / 24.04 / 26.04)
 
